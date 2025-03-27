@@ -1,17 +1,59 @@
 "use client";
-"use client";
-
 import Image from "next/image";
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import Draggable from "react-draggable";
 import { ResizableBox } from "react-resizable";
 import "react-resizable/css/styles.css";
 
-const Canvas = ({ media, width, height, startTime, endTime, currentTime }) => {
-  const mediaRef = useRef(null);
-  const draggableRef = useRef(null); // ✅ Fix for React 18
+const Canvas = ({
+  media,
+  width,
+  height,
+  startTime,
+  endTime,
+  isPlaying,
+  onTimeUpdate,
+}) => {
+  const videoRef = useRef(null);
+  const draggableRef = useRef(null);
 
-  if (!media)
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = startTime; // Start video at startTime when loaded
+      if (isPlaying) {
+        videoRef.current.play();
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  }, [isPlaying, startTime]);
+
+  useEffect(() => {
+    const handleTimeUpdate = () => {
+      if (videoRef.current) {
+        const current = videoRef.current.currentTime;
+        onTimeUpdate(current);
+
+        if (current >= endTime) {
+          videoRef.current.pause();
+        }
+      }
+    };
+
+    const videoElement = videoRef.current;
+
+    if (videoElement) {
+      videoElement.addEventListener("timeupdate", handleTimeUpdate);
+    }
+
+    return () => {
+      if (videoElement) {
+        videoElement.removeEventListener("timeupdate", handleTimeUpdate);
+      }
+    };
+  }, [endTime, onTimeUpdate]);
+
+  if (!media) {
     return (
       <div
         style={{
@@ -24,8 +66,7 @@ const Canvas = ({ media, width, height, startTime, endTime, currentTime }) => {
         Upload a media file
       </div>
     );
-
-  const isVisible = currentTime >= startTime && currentTime <= endTime;
+  }
 
   return (
     <div
@@ -37,37 +78,33 @@ const Canvas = ({ media, width, height, startTime, endTime, currentTime }) => {
         position: "relative",
       }}
     >
-      {isVisible && (
-        <Draggable nodeRef={draggableRef} bounds="parent">
-          <div ref={draggableRef}>
-            {" "}
-            {/* ✅ Prevents findDOMNode error */}
-            <ResizableBox
-              width={width}
-              height={height}
-              minConstraints={[100, 100]}
-              maxConstraints={[800, 600]}
-            >
-              {media.type.startsWith("image") ? (
-                <Image
-                  src={URL.createObjectURL(media)}
-                  alt="Uploaded"
-                  style={{ width: "100%", height: "100%" }}
-                  width={width || 100}
-                  height={height ||100}   
-                />
-              ) : (
-                <video
-                  ref={mediaRef}
-                  src={URL.createObjectURL(media)}
-                  style={{ width: "100%", height: "100%" }}
-                  controls
-                />
-              )}
-            </ResizableBox>
-          </div>
-        </Draggable>
-      )}
+      <Draggable nodeRef={draggableRef} bounds="parent">
+        <div ref={draggableRef}>
+          <ResizableBox
+            width={width}
+            height={height}
+            minConstraints={[100, 100]}
+            maxConstraints={[800, 600]}
+          >
+            {media.type.startsWith("image") ? (
+              <Image
+                src={URL.createObjectURL(media)}
+                alt="Uploaded"
+                style={{ width: "100%", height: "100%" }}
+                width={width || 100}
+                height={height || 100}
+              />
+            ) : (
+              <video
+                ref={videoRef}
+                src={URL.createObjectURL(media)}
+                style={{ width: "100%", height: "100%" }}
+                controls
+              />
+            )}
+          </ResizableBox>
+        </div>
+      </Draggable>
     </div>
   );
 };

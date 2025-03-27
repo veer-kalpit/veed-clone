@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Sidebar from "../components/Sidebar";
 import Canvas from "../components/Canvas";
-import Timeline from "../components/Timeline";
+
 import Controls from "../components/Controls";
 
 export default function Home() {
@@ -12,9 +12,10 @@ export default function Home() {
   const [startTime, setStartTime] = useState(0);
   const [endTime, setEndTime] = useState(10);
   const [currentTime, setCurrentTime] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   return (
-    <div style={{ display: "flex", height: "100vh" }}>
+    <div style={{ display: "flex", }}>
       <Sidebar
         onMediaUpload={setMedia}
         onSizeChange={(type, value) =>
@@ -30,18 +31,14 @@ export default function Home() {
         height={height}
         startTime={startTime}
         endTime={endTime}
-        currentTime={currentTime}
+        isPlaying={isPlaying}
+        onTimeUpdate={setCurrentTime}
       />
-      <div style={{ position: "absolute", bottom: 0, width: "100%" }}>
-        <Controls
-          onPlayPause={(playing) => console.log("Playing:", playing)}
-          duration={endTime}
-        />
-        <Timeline
-          duration={endTime}
-          currentTime={currentTime}
-          onTimeChange={setCurrentTime}
-        />
+
+      <div
+        style={{ position: "absolute", bottom: 10, width: "100%", left: 50 }}
+      >
+        <Controls onPlayPause={setIsPlaying} isPlaying={isPlaying} />
       </div>
     </div>
   );
